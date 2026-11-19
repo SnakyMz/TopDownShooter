@@ -4,12 +4,15 @@ using UnityEngine.InputSystem;
 public class Player : MonoBehaviour
 {
     [SerializeField] LayerMask aimLayer;
-    [SerializeField] float moveSpeed = 5f;
-    [SerializeField] float rotateSpeed = 500f;
-
+    [SerializeField] float walkSpeed = 1.5f;
+    [SerializeField] float runSpeed = 5f;
 
     PlayerInput playerInput;
+    InputAction moveAction;
+    InputAction aimAction;
+    InputAction sprintAction;
     CharacterController controller;
+    Animator animator;
 
     Vector2 moveInput;
     Vector2 aimInput;
@@ -17,28 +20,37 @@ public class Player : MonoBehaviour
     float verticalVelocity;
     Vector3 lookDirection;
 
+    bool isRunning;
+
+    void Awake()
+    {
+        playerInput = GetComponent<PlayerInput>();
+        moveAction = playerInput.actions["Move"];
+        aimAction = playerInput.actions["Aim"];
+        sprintAction = playerInput.actions["Sprint"];
+        controller = GetComponent<CharacterController>();
+        animator = GetComponent<Animator>();
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        playerInput = GetComponent<PlayerInput>();
-        controller = GetComponent<CharacterController>();
+
     }
 
     // Update is called once per frame
     void Update()
     {
+        GetInputs();
         Movement();
     }
 
     // Getting Inputs
-    public void OnMove(InputAction.CallbackContext context)
+    void GetInputs()
     {
-        moveInput = context.ReadValue<Vector2>();
-    }
-
-    public void OnAim(InputAction.CallbackContext context)
-    {
-        aimInput = context.ReadValue<Vector2>();
+        moveInput = moveAction.ReadValue<Vector2>();
+        aimInput = aimAction.ReadValue<Vector2>();
+        isRunning = sprintAction.IsPressed();
     }
 
     // Input Actions
@@ -52,8 +64,7 @@ public class Player : MonoBehaviour
             lookDirection.y = 0;
             lookDirection.Normalize();
 
-            Quaternion targetRotation = Quaternion.LookRotation(lookDirection);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotateSpeed * Time.deltaTime);
+            transform.forward = lookDirection;
         }
 
         // Gravity
@@ -61,10 +72,16 @@ public class Player : MonoBehaviour
         else verticalVelocity = -0.5f;
 
         // Movement
+        float moveSpeed = isRunning ? runSpeed : walkSpeed;
         velocity = new(moveInput.x * moveSpeed, verticalVelocity, moveInput.y * moveSpeed);
         if (moveInput.magnitude > 0)
         {
             controller.Move(velocity * Time.deltaTime);
         }
+
+        float x = Vector3.Dot(velocity.normalized, transform.right);
+        float y = Vector3.Dot(velocity.normalized, transform.forward);
+        animator.SetFloat("Side", isRunning ? x * 2 : x, 0.1f, Time.deltaTime);
+        animator.SetFloat("Forward", isRunning ? y * 2 : y, 0.1f, Time.deltaTime);
     }
 }
