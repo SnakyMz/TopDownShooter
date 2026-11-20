@@ -3,14 +3,18 @@ using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
+    [Header("Movement Settings")]
     [SerializeField] LayerMask aimLayer;
     [SerializeField] float walkSpeed = 1.5f;
-    [SerializeField] float runSpeed = 5f;
+    [SerializeField] float runSpeed = 3f;
 
-    PlayerInput playerInput;
-    InputAction moveAction;
-    InputAction aimAction;
-    InputAction sprintAction;
+    [Header("Weapon Settings")]
+    [SerializeField] GameObject pistol;
+    [SerializeField] GameObject shotgun;
+    [SerializeField] GameObject autogun;
+    [SerializeField] GameObject rifle;
+
+    Controls.PlayerActions controls;
     CharacterController controller;
     Animator animator;
 
@@ -24,10 +28,7 @@ public class Player : MonoBehaviour
 
     void Awake()
     {
-        playerInput = GetComponent<PlayerInput>();
-        moveAction = playerInput.actions["Move"];
-        aimAction = playerInput.actions["Aim"];
-        sprintAction = playerInput.actions["Sprint"];
+        controls = PlayerControl.Controls.Player;
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
     }
@@ -43,14 +44,16 @@ public class Player : MonoBehaviour
     {
         GetInputs();
         Movement();
+        ToggleWeapon();
+        Shoot();
     }
 
     // Getting Inputs
     void GetInputs()
     {
-        moveInput = moveAction.ReadValue<Vector2>();
-        aimInput = aimAction.ReadValue<Vector2>();
-        isRunning = sprintAction.IsPressed();
+        moveInput = controls.Move.ReadValue<Vector2>();
+        aimInput = controls.Aim.ReadValue<Vector2>();
+        isRunning = controls.Sprint.IsPressed();
     }
 
     // Input Actions
@@ -83,5 +86,30 @@ public class Player : MonoBehaviour
         float y = Vector3.Dot(velocity.normalized, transform.forward);
         animator.SetFloat("Side", isRunning ? x * 2 : x, 0.1f, Time.deltaTime);
         animator.SetFloat("Forward", isRunning ? y * 2 : y, 0.1f, Time.deltaTime);
+    }
+
+    void Shoot()
+    {
+        if (controls.Attack.WasPerformedThisFrame())
+        {
+            animator.SetTrigger("Shoot");
+        }
+    }
+
+    void ToggleWeapon()
+    {
+        if (controls.Weapon1.WasPerformedThisFrame()) SwitchWeapon(pistol);
+        else if (controls.Weapon2.WasPerformedThisFrame()) SwitchWeapon(shotgun);
+        else if (controls.Weapon3.WasPerformedThisFrame()) SwitchWeapon(autogun);
+        else if (controls.Weapon4.WasPerformedThisFrame()) SwitchWeapon(rifle);
+    }
+
+    void SwitchWeapon(GameObject gun)
+    {
+        pistol.SetActive(false);
+        shotgun.SetActive(false);
+        autogun.SetActive(false);
+        rifle.SetActive(false);
+        gun.SetActive(true);
     }
 }
