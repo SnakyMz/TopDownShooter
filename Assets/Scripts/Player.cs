@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
     [Header("Movement Settings")]
+    [SerializeField] Transform aim;
     [SerializeField] LayerMask aimLayer;
     [SerializeField] float walkSpeed = 1.5f;
     [SerializeField] float runSpeed = 3f;
@@ -13,6 +13,7 @@ public class Player : MonoBehaviour
     [SerializeField] GameObject shotgun;
     [SerializeField] GameObject autogun;
     [SerializeField] GameObject rifle;
+    [SerializeField] Transform leftHandTarget;
 
     Controls.PlayerActions controls;
     CharacterController controller;
@@ -30,13 +31,13 @@ public class Player : MonoBehaviour
     {
         controls = PlayerControl.Controls.Player;
         controller = GetComponent<CharacterController>();
-        animator = GetComponent<Animator>();
+        animator = GetComponentInChildren<Animator>();
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-
+        SwitchWeapon(pistol);
     }
 
     // Update is called once per frame
@@ -68,6 +69,7 @@ public class Player : MonoBehaviour
             lookDirection.Normalize();
 
             transform.forward = lookDirection;
+            aim.position = new Vector3(hit.point.x, transform.position.y + 1, hit.point.z);
         }
 
         // Gravity
@@ -106,10 +108,16 @@ public class Player : MonoBehaviour
 
     void SwitchWeapon(GameObject gun)
     {
+        // Toggling gameobject
         pistol.SetActive(false);
         shotgun.SetActive(false);
         autogun.SetActive(false);
         rifle.SetActive(false);
         gun.SetActive(true);
+
+        // Setting up IK target transform
+        Transform targetTransform = gun.GetComponentInChildren<LeftHandTargetTransform>().transform;
+        leftHandTarget.localPosition = targetTransform.localPosition;
+        leftHandTarget.localRotation = targetTransform.localRotation;
     }
 }
