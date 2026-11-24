@@ -8,13 +8,6 @@ public class Player : MonoBehaviour
     [SerializeField] float walkSpeed = 1.5f;
     [SerializeField] float runSpeed = 3f;
 
-    [Header("Weapon Settings")]
-    [SerializeField] GameObject pistol;
-    [SerializeField] GameObject shotgun;
-    [SerializeField] GameObject autogun;
-    [SerializeField] GameObject rifle;
-    [SerializeField] Transform leftHandTarget;
-
     Controls.PlayerActions controls;
     CharacterController controller;
     Animator animator;
@@ -37,7 +30,7 @@ public class Player : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        SwitchWeapon(pistol);
+
     }
 
     // Update is called once per frame
@@ -45,8 +38,6 @@ public class Player : MonoBehaviour
     {
         GetInputs();
         Movement();
-        ToggleWeapon();
-        Shoot();
     }
 
     // Getting Inputs
@@ -69,7 +60,7 @@ public class Player : MonoBehaviour
             lookDirection.Normalize();
 
             transform.forward = lookDirection;
-            aim.position = new Vector3(hit.point.x, transform.position.y + 1, hit.point.z);
+            aim.position = hit.point + Vector3.up;
         }
 
         // Gravity
@@ -88,36 +79,5 @@ public class Player : MonoBehaviour
         float y = Vector3.Dot(velocity.normalized, transform.forward);
         animator.SetFloat("Side", isRunning ? x * 2 : x, 0.1f, Time.deltaTime);
         animator.SetFloat("Forward", isRunning ? y * 2 : y, 0.1f, Time.deltaTime);
-    }
-
-    void Shoot()
-    {
-        if (controls.Attack.WasPerformedThisFrame())
-        {
-            animator.SetTrigger("Shoot");
-        }
-    }
-
-    void ToggleWeapon()
-    {
-        if (controls.Weapon1.WasPerformedThisFrame()) SwitchWeapon(pistol);
-        else if (controls.Weapon2.WasPerformedThisFrame()) SwitchWeapon(shotgun);
-        else if (controls.Weapon3.WasPerformedThisFrame()) SwitchWeapon(autogun);
-        else if (controls.Weapon4.WasPerformedThisFrame()) SwitchWeapon(rifle);
-    }
-
-    void SwitchWeapon(GameObject gun)
-    {
-        // Toggling gameobject
-        pistol.SetActive(false);
-        shotgun.SetActive(false);
-        autogun.SetActive(false);
-        rifle.SetActive(false);
-        gun.SetActive(true);
-
-        // Setting up IK target transform
-        Transform targetTransform = gun.GetComponentInChildren<LeftHandTargetTransform>().transform;
-        leftHandTarget.localPosition = targetTransform.localPosition;
-        leftHandTarget.localRotation = targetTransform.localRotation;
     }
 }
